@@ -1,16 +1,17 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+/** @var Factory $factory */
 
 use App\Client;
 use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factory;
 
 $factory->define(Client::class, function (Faker $faker) {
     return [
         'name' => $faker->name,
         'email' => $faker->email,
         'phone' => $faker->phoneNumber,
-        'adress' => $faker->streetAddress,
+        'address' => $faker->streetAddress,
         'city' => $faker->city,
         'postcode' => $faker->postcode,
     ];

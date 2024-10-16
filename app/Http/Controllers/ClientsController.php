@@ -1,16 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Client;
-use Illuminate\Http\Request;
+use App\Http\Requests\ClientRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class ClientsController extends Controller
 {
     public function index()
     {
-        $clients = Client::all();
-
+        $currentUser = Auth::user();
+        $clients = Client::where('user_id', $currentUser->getAuthIdentifier())->get();
         foreach ($clients as $client) {
             $client->append('bookings_count');
         }
@@ -23,31 +27,30 @@ class ClientsController extends Controller
         return view('clients.create');
     }
 
-    public function show($client)
+    public function show($clientId)
     {
-        $client = Client::where('id', $client)->first();
+        $client = Client::with(['bookings' => function ($query) {
+            $query->orderBy('start', 'desc');
+        }])->with('journals')->where('id', $clientId)->first();
 
         return view('clients.show', ['client' => $client]);
     }
 
-    public function store(Request $request)
+    public function store(ClientRequest $request): JsonResponse
     {
-        $client = new Client;
-        $client->name = $request->get('name');
-        $client->email = $request->get('email');
-        $client->phone = $request->get('phone');
-        $client->adress = $request->get('adress');
-        $client->city = $request->get('city');
-        $client->postcode = $request->get('postcode');
-        $client->save();
+        $clientData = $request->validated();
 
-        return $client;
+        return response()->json(Client::create($clientData));
     }
 
-    public function destroy($client)
+    public function destroy($client): JsonResponse
     {
-        Client::where('id', $client)->delete();
+        $deleted = Client::where('id', $client)->delete();
 
-        return 'Deleted';
+        if ($deleted) {
+            return response()->json('Deleted', 200);
+        }
+
+        return response()->json('Not Found', 404);
     }
 }
